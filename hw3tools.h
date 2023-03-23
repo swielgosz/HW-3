@@ -53,13 +53,13 @@ class Path
 {
 public:
 
-    std::list<State*> stateList;
+    std::list<State> stateList;
     Path* parent;
-    State* intialPathState;
+    State intialPathState;
 
-    Path(State* initialState)
+    Path(State initialState)
     {
-        this->stateList = std::list<State*>();
+        this->stateList = std::list<State>();
         this->parent = NULL;  
         this->intialPathState = initialState;
         this->stateList.push_back(initialState);
@@ -72,22 +72,22 @@ public:
 
         while (trajectory_distance <= epsilon && iter < 10000)
         {
-            State *currentState = this->stateList.back();
-            State *newState = new State();
+            State currentState = this->stateList.back();
+            State newState = State();
 
             // currentState->a = rand_a();
             // currentState->gamma = rand_gamma();
 
-            newState->x = currentState->x + dt * (currentState->v * cos(currentState->theta));
-            newState->y = currentState->y + dt * (currentState->v * sin(currentState->theta));
-            newState->theta = currentState->theta + dt * currentState->w;
-            newState->v = currentState->v + dt * currentState->a;
-            newState->w = currentState->w + dt * currentState->gamma;
-            newState->t = currentState->t + dt;
+            newState.x = currentState.x + dt * (currentState.v * cos(currentState.theta));
+            newState.y = currentState.y + dt * (currentState.v * sin(currentState.theta));
+            newState.theta = currentState.theta + dt * currentState.w;
+            newState.v = currentState.v + dt * currentState.a;
+            newState.w = currentState.w + dt * currentState.gamma;
+            newState.t = currentState.t + dt;
 
             this->stateList.push_back(newState);
 
-            trajectory_distance = trajectory_distance + sqrt(pow((newState->x - currentState->x), 2) + pow((newState->y - currentState->y), 2));
+            trajectory_distance = trajectory_distance + sqrt(pow((newState.x - currentState.x), 2) + pow((newState.y - currentState.y), 2));
             iter++;
         }
     }
@@ -101,10 +101,10 @@ public:
         }
 
         int vecSize = stateList.size();
-        for (State* const& i : stateList)
+        for (State const& i : stateList)
         {
             fprintf(pFile, "%f, %f, %f, %f, %f, %f\n",
-                    i->t, i->x, i->y, i->theta, i->v, i->w, i->a, i->gamma);
+                    i.t, i.x, i.y, i.theta, i.v, i.w, i.a, i.gamma);
         }
         fclose(pFile);
         printf("saved search tree in %s\n", TrajectoryFile.c_str());

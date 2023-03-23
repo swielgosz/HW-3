@@ -26,7 +26,7 @@ int main()
     double goal_x = 0;
     double goal_y = 0;
     double goal_r = 5;
-    double epsilon = 10;
+    double epsilon = 1;
     
     // Seed random number generator
     srand(time(NULL)); 
@@ -79,49 +79,49 @@ int main()
     }
     int num_robot_pt = i;
 
-    State* startState = new State();
-    startState->x = start_x;
-    startState->y = start_y;
-    startState->theta = start_theta;
-    startState->v = 0;
-    startState->w = 0;
-    startState->a = 1;
-    startState->gamma = .2;
+    State startState = State();
+    startState.x = start_x;
+    startState.y = start_y;
+    startState.theta = start_theta;
+    startState.v = 0;
+    startState.w = 0;
+    startState.a = 0;
+    startState.gamma = 0;
     
-    Path initialTrajectory = Path(startState);
+    Path initialPath = Path(startState);
 
     Tree T = Tree();
-    T.add_path(&initialTrajectory);
+    T.add_path(&initialPath);
 
     // Loop through forward and steering accelerations and create trajectories
-    double da = 0.1; // forward acceleration step
-    double dgamma = pi/10; // steering acceration step
+    double da = 0.5; // forward acceleration step
+    double dgamma = pi/4; // steering acceration step
     int idx1 = 0;
     int idx2 = 0;
     int count = 0;
-    std::list<State*> robotStates;
+    std::list<State> robotStates;
     std::list<Path> recordPath;
 
-    for (double a = -a_max; a <= a_max; a += da)
+    for (double a_test = -a_max; a_test <= a_max; a_test += da)
     {
-        for (double gamma = -gamma_max; gamma <= gamma_max; gamma += dgamma )
+        for (double gamma_test = -gamma_max; gamma_test <= gamma_max; gamma_test += dgamma )
         {
-            State* s = new State();
-            s->t = 0;
-            s->x = 0;
-            s->y = 0;
-            s->theta = 0;
-            s->v = 0;
-            s->w = 0;
-            s->a = a;
-            s->gamma = gamma;
+            State s = State();
+            s.t = 0;
+            s.x = 0;
+            s.y = 0;
+            s.theta = 0;
+            s.v = 0;
+            s.w = 0;
+            s.a = a_test;
+            s.gamma = gamma_test;
             robotStates.push_back(s);
 
             Path path = Path(s);
             path.euler(epsilon,0.1);
             recordPath.push_back(path);
            // P.euler(epsilon,0.1);
-            path.saveTrajectoryToFile("./output/hw3/tests/trajectory_" + std::to_string(count) + ".csv");
+            path.saveTrajectoryToFile("./test/output" + std::to_string(count) + ".csv");
             count++;
 
         }
