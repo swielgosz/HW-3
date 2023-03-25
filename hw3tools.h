@@ -15,12 +15,14 @@ public:
     double y; // physical y location
 
     Node *parentNode; // used for graph search, this is a pointer to this node's parent
+    double distFromParent; // define the distance of a node from its parent node
 
     Node() // constructor
     {
         this->x = 0;
         this->y = 0;
         this->parentNode = NULL;
+        this->distFromParent = 0;
     }
 };
 
@@ -56,6 +58,8 @@ public:
     std::list<State> stateList;
     Path* parent;
     State intialPathState;
+    double dist2randNode;
+    bool inBounds;
 
     Path(State initialState)
     {
@@ -63,14 +67,30 @@ public:
         this->parent = NULL;  
         this->intialPathState = initialState;
         this->stateList.push_back(initialState);
+        this->dist2randNode = 0;
+        this->inBounds = NULL;
     }
 
-    void euler(double epsilon, double dt)
+    void euler(double epsilon, double distance, double dt)
     {
+        double pi = 3.14159265359;
+        double v_max = 5;
+        double w_max = pi / 2;
         int iter = 0;
         double trajectory_distance = 0;
+        double max_prop_dist = 0;
 
-        while (trajectory_distance <= epsilon && iter < 10000)
+        if (epsilon <= distance)
+         {
+            double max_prop_dist = epsilon;
+         }
+        else
+        {
+            double max_prop_dist = distance;
+        }
+
+        // Propagate trajectory distance of epsilon or distance from start to goal node, whichever is shorter
+        while (trajectory_distance <= max_prop_dist && iter < 10000)
         {
             State currentState = this->stateList.back();
             State newState = State();
@@ -87,9 +107,19 @@ public:
 
             this->stateList.push_back(newState);
 
+            if(abs(newState.v) > v_max || abs(newState.w) > w_max)
+            {
+                this->inBounds = false;
+            }
+            else
+            {
+                this->inBounds = true;
+            }
+
             trajectory_distance = trajectory_distance + sqrt(pow((newState.x - currentState.x), 2) + pow((newState.y - currentState.y), 2));
             iter++;
         }
+        
     }
 
     bool saveTrajectoryToFile(std::string TrajectoryFile)
@@ -189,11 +219,35 @@ public:
                 nearestNode = node_list[i];
             }
         }
+        
         return nearestNode;
     }
 
+    // find nearest path to specified input node
+    Path *nearest_Path(Node *newNode)
+    {
+        double min_distance = 1000000000000000; // intialize with a really big number ("infinity")
+        Path *nearestPath = NULL;
+
+        // loop through all nodes to find closest - this is inefficient but still works quickly, sorry :(
+        //for (Path* const& i :pathList)
+        for (std::list<Path*>::iterator i = this->pathList.begin(); i != this->pathList.end(); i++)
+        {
+           // double endpt_x = near
+            double distance = sqrt(pow((*i)->stateList.back().x - newNode->x, 2) + pow((*i)->stateList.back().y - newNode->y, 2));
+            if (distance < min_distance)
+            {
+                min_distance = distance;   
+                nearestPath = *i;
+            }
+        }
+        nearestPath->dist2randNode = min_distance;
+        return nearestPath;
+    }
+
+
     // save path (code modified from Dr. Otte)
-    bool savePathToFile(std::string pathFile, Node *goalNode)
+    bool savePathToFile(std::string pathFile, Path *goalPath)
     {
         FILE *pFile = fopen(pathFile.c_str(), "w");
         if (pFile == NULL)
@@ -201,12 +255,13 @@ public:
             return false;
         }
 
-        Node *thisNode = goalNode;
-        while (thisNode != NULL)
+        while (goalPath != NULL)
         {
-            // format is x, y
-            fprintf(pFile, "%f, %f\n", thisNode->x, thisNode->y);
-            thisNode = thisNode->parentNode;
+            // write reversed trajectory to file
+        for (std::list<State>::iterator it = goalPath->stateList.begin(); it != goalPath->stateList.end(); it++) {
+            fprintf(pFile, "%f, %f, %f, %f, %f, %f, %f, %f\n", it->t, it->x, it->y, it->theta, it->v, it->w, it->a, it->gamma);
+        }
+            goalPath = goalPath->parent;
         }
 
         fclose(pFile);
@@ -224,18 +279,11 @@ public:
             return false;
         }
 
-        int vecSize = node_list.size();
-        for (int n = 0; n < vecSize; n++)
+        for(std::list<Path*>::iterator it1 = this->pathList.begin(); it1 != this->pathList.end(); it1++)
         {
-            Node *thisNode = node_list[n];
-            if (thisNode->parentNode != NULL)
-            {
-
-                // format is x1, y1, id2, x2, y2
-                fprintf(pFile, "%f, %f, %f, %f\n",
-                        thisNode->x, thisNode->y,
-                        thisNode->parentNode->x, thisNode->parentNode->y);
-            }
+        for (std::list<State>::iterator it = (*it1)->stateList.begin(); it != (*it1)->stateList.end(); it++) {
+            fprintf(pFile, "%f, %f, %f, %f, %f, %f, %f, %f\n", it->t, it->x, it->y, it->theta, it->v, it->w, it->a, it->gamma);
+        }
         }
         fclose(pFile);
         printf("saved search tree in %s\n", searchTreeFile.c_str());
@@ -248,9 +296,9 @@ public:
 
 Node *sample(); // function to randomly sample C space
 
-int collision_check(Node *, Node *, double x_ob[], double y_ob[], double r_ob[], int num_ob);
+int collision_check(Path *,  double x_ob[], double y_ob[], double r_ob[], int num_ob);
 
-int goal_check(Node *, double goal_x, double goal_y, double goal_r);
+int goal_check(Path *, double goal_x, double goal_y, double goal_r);
 
 Node *solve2BP(Node *, Node *, double);
 
