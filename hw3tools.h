@@ -78,17 +78,19 @@ public:
         double w_max = pi / 2;
         int iter = 0;
         double trajectory_distance = 0;
-        double max_prop_dist = 0;
+        double max_prop_dist;
 
         if (epsilon <= distance)
          {
-            double max_prop_dist = epsilon;
+            max_prop_dist = epsilon;
          }
         else
         {
-            double max_prop_dist = distance;
+            max_prop_dist = distance;
         }
-
+        //std::cout<<"epsilon = "<<epsilon<<std::endl;
+        //std::cout<<"distance = "<<distance<<std::endl;
+        //  std::cout<<"max prop dist = "<<max_prop_dist<<std::endl;
         // Propagate trajectory distance of epsilon or distance from start to goal node, whichever is shorter
         while (trajectory_distance <= max_prop_dist && iter < 10000)
         {
