@@ -18,23 +18,14 @@ int main()
     double gamma_max = pi / 2;
     double delta = .1;
 
-    /*double start_x = 30;
-    double start_y = -35;
-    double start_theta = pi / 2;
-    double goal_x = 0;
-    double goal_y = 0;
-    double goal_r = 5;
-    double epsilon = 1;*/
-    double start_x = -30;
-    double start_y = -35;
-    double start_theta = pi/4;
-    double goal_x = -35;
-    double goal_y = 30;
-    double goal_r = 5;
-    double epsilon = 2;
-
-    // Seed random number generator
-    srand(time(NULL));
+// Problem definitions
+    double start_x_arr[5] = {30, 40, 30, -50, -30};
+    double start_y_arr[5] = {-35, -40, 40, -30, -35};
+    double start_theta_arr[5] = {pi/2, 0, 3*pi/2, pi/2, -pi/4};
+    double goal_x_arr[5] = {0, 30, -50, 30, -35};
+    double goal_y_arr[5] = {0, 40, -30, -35, 30};
+    double goal_r_arr[5] = {5, 5, 5, 5, 5};
+    double epsilon_arr[5] = {10, 5, 5, 3, 2};
 
     // Reading in obstacles
     ifstream filestream("obstacles.txt");
@@ -61,15 +52,29 @@ int main()
     }
     int num_ob = i;
 
-    // Reading in robot points
+    for (int run = 0; run<5; run++)
+    {
+    double start_x = start_x_arr[run];
+    double start_y = start_y_arr[run];
+    double start_theta = start_theta_arr[run];
+    double goal_x = goal_x_arr[run];
+    double goal_y = goal_y_arr[run];
+    double goal_r = goal_r_arr[run];
+    double epsilon = epsilon_arr[run];
+    // Seed random number generator
+    srand(time(NULL));
+
+    
+
+    /*// Reading in robot points
     ifstream filestream2("H3_robot.txt");
     if (!filestream.is_open())
     {
         cout << "File failed to open" << endl;
         return 0;
-    }
+    }*/
 
-    i = 0;
+    /*i = 0;
     string line2, X2, Y2;
     double x_robot[37], y_robot[37];
     while (getline(filestream2, line2))
@@ -81,7 +86,7 @@ int main()
         y_robot[i] = stod(Y2);
         i++;
     }
-    int num_robot_pt = i;
+    int num_robot_pt = i;*/
 
     State startState = State();
     startState.x = start_x;
@@ -97,7 +102,7 @@ int main()
     Tree T = Tree();
     T.add_path(&initialPath);
 
-    int goal_reached = 0, iter = 0, itermax = 10000;
+    int goal_reached = 0, iter = 0, itermax = 100000;
     Path *goalPath = NULL;
 
     while (goal_reached != 1 && iter < itermax)
@@ -174,7 +179,7 @@ int main()
                 break;
             }
         }
-        cout<<iter<<endl;
+       // cout<<iter<<endl;
         iter++;
     }
 
@@ -196,11 +201,11 @@ int main()
         Node *goalNode = NULL;
     */
 
-   int run = 1;
+   
    T.savePathToFile("output_path_" + to_string(run+1) + ".txt",goalPath);
    T.saveSearchTreeToFile("search_tree_" + to_string(run+1) + ".txt");
 
-
+    }
     return 0;
 }
 
@@ -219,182 +224,10 @@ Node *sample()
     return newNode;
 }
 
-///////////////////////////////////////////////////////////////////////////////////
 
-// Find distance between two nodes
-double euclidean(Node *Node1, Node *Node2)
-{
-    return (sqrt(pow(Node1->x - Node2->x, 2) + pow(Node1->y - Node2->y, 2)));
-}
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-// Function to find new node that is in direction of random node from the closest node to it
-Node *eulerGoal(Node *closestNode, Node *randNode, double epsilon)
-{
-    double x1 = closestNode->x;
-    double y1 = closestNode->y;
-    double x2 = randNode->x;
-    double y2 = randNode->y;
-    double multiplier;
-
-    double distance = (sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2)));
-
-    // travel distance of node 1 to node 2, or distance epsilon, whichever is shorter
-    if (distance < epsilon)
-    {
-        multiplier = distance;
-    }
-    else
-    {
-        multiplier = epsilon;
-    }
-
-    // components of unit vector giving direction from (x1,y1) to (x2,y2)
-    double unitvec_x = (x2 - x1) / (sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2)));
-    double unitvec_y = (y2 - y1) / (sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2)));
-
-    // define new node in direction of random node from closest node
-    Node *newNode = new Node();
-    newNode->x = x1 + multiplier * unitvec_x;
-    newNode->y = y1 + multiplier * unitvec_y;
-    newNode->parentNode = closestNode;
-    newNode->distFromParent = multiplier;
-    return newNode;
-}
-
-///////////////////////////////////////////////////////////////////////////////////
-
-/*int collision_check(Path *bestPath, double x_ob[], double y_ob[], double r_ob[], int num_ob)
-{
-    double pi = 3.14159265359;
-    double r_robot = 1; // max radius of robot, model robot as a circle
-    int collision;
-    int point_check;
-    int robot_check;
-    double distance;
-
-    // check if first or last point of curve are in collision with object
-    for (int j = 0; j < num_ob; j++)
-        {
-            // distance from center of object to new node
-            distance = sqrt(pow(x_ob[j] - bestPath->stateList.front().x, 2) + pow(y_ob[j] - bestPath->stateList.front().y, 2));
-
-            // if distance is less than radius, the point is in an object
-            if (distance <= r_ob[j])
-            {
-                point_check = 1;
-                break;
-            }
-            else
-            {
-                point_check = 0;
-            }
-            
-        }
-
-        for (int j = 0; j < num_ob; j++)
-        {
-            // distance from center of object to new node
-            distance = sqrt(pow(x_ob[j] - bestPath->stateList.back().x, 2) + pow(y_ob[j] - bestPath->stateList.back().y, 2));
-
-            // if distance is less than radius, the point is in an object
-            if (distance <= r_ob[j])
-            {
-                point_check = 1;
-                break;
-            }
-            else
-            {
-                point_check = 0;
-            }
-        }
-
-
-    // loop through the rest of the curve at increments of .5 arc length
-    double new_delta = 0;
-
-    for (auto it = bestPath->stateList.begin(); it != bestPath->stateList.end(); it++)
-    {
-        
-        new_delta = new_delta + sqrt(pow(it->x - std::next(it)->x, 2) + pow(it->y - std::next(it)->y, 2));
-        //cout<<"nd="<<new_delta<<endl;
-        if(new_delta >= 0.5)
-        {
-            new_delta = 0;
-          //  cout<<"new_delta reset"<<new_delta<<endl;
-        for (int j = 0; j < num_ob; j++)
-        {
-            // distance from center of object to new node
-            double distance = sqrt(pow(x_ob[j] - it->x, 2) + pow(y_ob[j] - it->y, 2));
-
-            // if distance is less than radius, the point is in an object
-            if (distance <= r_ob[j])
-            {
-                point_check = 1;
-                break;
-            }
-            else
-            {
-                point_check = 0;
-            }
-           // cout<<"j = "<<j<<endl;
-            
-        }
-        if (point_check == 1)
-        {
-            break;
-        }
-
-        // check if any point at a radius of 1 (i.e. max radius of the robot) away from a point is in collision with an object
-        for (int j = 0; j < num_ob; j++)
-        {
-            for (float k = 0; k < 2 * pi; k += pi/20)
-            {
-                // distance from center of object to new node
-                double distance = sqrt(pow(x_ob[j] - (it->x + r_robot * cos(k)), 2) + pow(y_ob[j] - (it->y + r_robot * sin(k)), 2));
-
-                // if distance is less than radius of object + radius of robot, the point is in an object
-                if (distance <= (r_ob[j] + r_robot))
-                {
-                    robot_check = 1;
-                    break;
-                }
-                else
-                {
-                    robot_check = 0;
-                }
-            }
-            if (robot_check == 1)
-            {
-                break;
-            }
-        }
-        
-
-        if (point_check == 1 || robot_check == 1)
-        {
-            break;
-        }
-        }
-        if (point_check == 1 || robot_check == 1)
-        {
-            break;
-        }
-    }
-
-    if (point_check == 1 || robot_check == 1)
-    {
-        collision = 1;
-    }
-    else
-    {
-        collision = 0;
-    }
-
-    return collision;
-}
-*/
 int collision_check(Path *bestPath, double x_ob[], double y_ob[], double r_ob[], int num_ob)
 {
     double pi = 3.14159265359;
@@ -403,19 +236,40 @@ int collision_check(Path *bestPath, double x_ob[], double y_ob[], double r_ob[],
     int point_check;
     int robot_check;
     double distance;
+    double x_calc = 0;
+    double y_calc = 0;
+    double x_eff;
+    double y_eff;
 
     // loop through all points of the curve
     for (auto i = bestPath->stateList.begin(); i != bestPath->stateList.end(); i++)
     {
+        double dist_from_last_pt = sqrt((pow(i->x - x_calc,2) + pow(i->y - y_calc,2)));
+        if (dist_from_last_pt > 0.5)
+        {
+          //  x_eff = x_calc + .5*(i->x - x_calc)/dist_from_last_pt;
+            //y_eff = y_calc + .5*(i->y - y_calc)/dist_from_last_pt;
+            
+       //     cout<<"Increase in path resolution needed"<<endl;
+        }
+      /*  else{
+            x_eff = i->x;
+            y_eff = i->y;
+        }*/
+        x_eff = i->x;
+            y_eff = i->y;
+        x_calc = x_eff;
+        y_calc = y_eff;
         for (int j = 0; j < num_ob; j++)
         {
             // distance from center of object to new node
-            distance = sqrt(pow(x_ob[j] - i->x, 2) + pow(y_ob[j] - i->y, 2));
+            distance = sqrt(pow(x_ob[j] - x_eff, 2) + pow(y_ob[j] - y_eff, 2));
 
             // if distance is less than radius, the point is in an object
             if (distance <= r_ob[j])
             {
                 point_check = 1;
+                break;
             }
             else
             {
@@ -429,12 +283,13 @@ int collision_check(Path *bestPath, double x_ob[], double y_ob[], double r_ob[],
             for (double k = 0; k < 2 * pi; k += pi / 50)
             {
                 // distance from center of object to new node
-                distance = sqrt(pow(x_ob[j] - (i->x + r_robot * cos(k)), 2) + pow(y_ob[j] - (i->y + r_robot * sin(k)), 2));
+                distance = sqrt(pow(x_ob[j] - (x_eff + r_robot * cos(k)), 2) + pow(y_ob[j] - (y_eff + r_robot * sin(k)), 2));
 
                 // if distance is less than radius of object + radius of robot, the point is in an object
                 if (distance <= (r_ob[j] + r_robot))
                 {
                     robot_check = 1;
+                    break;
                 }
                 else
                 {

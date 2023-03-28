@@ -60,6 +60,7 @@ public:
     State intialPathState;
     double dist2randNode;
     bool inBounds;
+    bool collision;
 
     Path(State initialState)
     {
@@ -69,6 +70,7 @@ public:
         this->stateList.push_back(initialState);
         this->dist2randNode = 0;
         this->inBounds = NULL;
+        this->collision = NULL;
     }
 
     void euler(double epsilon, double distance, double dt)
@@ -233,14 +235,14 @@ public:
 
         // loop through all nodes to find closest - this is inefficient but still works quickly, sorry :(
         //for (Path* const& i :pathList)
-        for (std::list<Path*>::iterator i = this->pathList.begin(); i != this->pathList.end(); i++)
+        for (std::list<Path*>::iterator it = this->pathList.begin(); it != this->pathList.end(); it++)
         {
            // double endpt_x = near
-            double distance = sqrt(pow((*i)->stateList.back().x - newNode->x, 2) + pow((*i)->stateList.back().y - newNode->y, 2));
+            double distance = sqrt(pow((*it)->stateList.back().x - newNode->x, 2) + pow((*it)->stateList.back().y - newNode->y, 2));
             if (distance < min_distance)
             {
                 min_distance = distance;   
-                nearestPath = *i;
+                nearestPath = *it;
             }
         }
         nearestPath->dist2randNode = min_distance;
@@ -301,7 +303,3 @@ Node *sample(); // function to randomly sample C space
 int collision_check(Path *,  double x_ob[], double y_ob[], double r_ob[], int num_ob);
 
 int goal_check(Path *, double goal_x, double goal_y, double goal_r);
-
-Node *solve2BP(Node *, Node *, double);
-
-double euclidean(Node *Node1, Node *Node2);
